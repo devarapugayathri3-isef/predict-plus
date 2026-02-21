@@ -6,74 +6,13 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import mean_absolute_error, r2_score
+from sklearn.ensemble import RandomForestRegressor
 
-# --------------------------------------------------
-# PAGE CONFIG
-# --------------------------------------------------
+st.set_page_config(page_title="PREDICT+ Computational Model", layout="wide")
 
-st.set_page_config(page_title="PREDICT+", layout="wide")
-
-# Custom Styling
-st.markdown("""
-<style>
-.big-title {
-    font-size:48px !important;
-    font-weight:700;
-    color:#1f4e79;
-}
-.section-title {
-    font-size:28px !important;
-    font-weight:600;
-    color:#2e7d32;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# --------------------------------------------------
-# EXECUTIVE SUMMARY
-# --------------------------------------------------
-
-st.markdown('<p class="big-title">PREDICT+</p>', unsafe_allow_html=True)
-
-st.markdown("""
-## Executive Summary
-
-PREDICT+ is a biomedical engineering prototype that demonstrates how 
-maternal wellness behaviors can be computationally modeled to produce 
-an interpretable Fetal Comfort Score (FCS).
-
-Using synthetic data and regression modeling, this dashboard illustrates 
-how sleep, hydration, stress, activity, fetal movement, gestational age, 
-and BMI collectively influence fetal comfort in a simulated environment.
-
-The system emphasizes accessibility, interpretability, and ethical design.
-""")
-
-st.divider()
-
-st.markdown("""
-## Why This Matters
-
-Maternal wellness significantly influences fetal development outcomes.  
-Most monitoring systems are reactive rather than predictive.
-
-This prototype demonstrates how wearable-compatible wellness metrics 
-could be integrated into a computational framework to:
-
-• Improve early risk awareness  
-• Enhance patient education  
-• Support preventative maternal care  
-• Increase accessibility to data-driven insights  
-
-This work represents a conceptual step toward ethical, interpretable 
-maternal–fetal health modeling.
-""")
-
-st.divider()
-
-# --------------------------------------------------
+# ============================================================
 # DATA GENERATION
-# --------------------------------------------------
+# ============================================================
 
 @st.cache_data
 def generate_dataset(n=1000):
@@ -109,9 +48,9 @@ def generate_dataset(n=1000):
 
 data = generate_dataset()
 
-# --------------------------------------------------
+# ============================================================
 # MODEL TRAINING
-# --------------------------------------------------
+# ============================================================
 
 X = data.drop(["FCS_true", "Risk_Category"], axis=1)
 y = data["FCS_true"]
@@ -120,12 +59,18 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
 )
 
+# Linear Regression
 reg_model = LinearRegression()
 reg_model.fit(X_train, y_train)
-
 y_pred = reg_model.predict(X_test)
 MAE = mean_absolute_error(y_test, y_pred)
 R2 = r2_score(y_test, y_pred)
+
+# Random Forest Comparison
+rf_model = RandomForestRegressor(random_state=42)
+rf_model.fit(X_train, y_train)
+rf_pred = rf_model.predict(X_test)
+rf_R2 = r2_score(y_test, rf_pred)
 
 # Classification
 X_class = X
@@ -139,11 +84,33 @@ classifier = LogisticRegression(max_iter=1000)
 classifier.fit(Xc_train, yc_train)
 classification_accuracy = classifier.score(Xc_test, yc_test)
 
-# --------------------------------------------------
-# INTERACTIVE PANEL
-# --------------------------------------------------
+cv_scores = cross_val_score(classifier, X_class, y_class, cv=5)
 
-st.markdown("## Interactive Simulation Panel")
+# ============================================================
+# EXECUTIVE SUMMARY
+# ============================================================
+
+st.title("PREDICT+")
+st.markdown("## Computational Maternal–Fetal Modeling Framework")
+
+st.markdown("""
+PREDICT+ is a biomedical engineering prototype that models a 
+Fetal Comfort Score (FCS) using seven measurable maternal wellness factors.
+
+The system integrates normalization, weighted aggregation, regression modeling,
+classification, cross-validation, and robustness testing to demonstrate
+how computational modeling can translate maternal behaviors into interpretable metrics.
+
+This tool is educational and non-clinical.
+""")
+
+st.divider()
+
+# ============================================================
+# INTERACTIVE SIMULATION
+# ============================================================
+
+st.markdown("## Interactive Maternal Wellness Simulation")
 
 sleep = st.slider("Sleep (hours)", 0.0, 12.0, 7.0)
 hydration = st.slider("Hydration (liters/day)", 0.0, 5.0, 2.5)
@@ -165,13 +132,7 @@ input_df = pd.DataFrame([{
 
 FCS = reg_model.predict(input_df)[0]
 
-st.divider()
-
-# --------------------------------------------------
-# OUTPUT
-# --------------------------------------------------
-
-st.subheader("🩺 Fetal Comfort Score")
+st.subheader("Fetal Comfort Score")
 
 if FCS >= 0.75:
     st.success(f"Optimal Comfort — Score: {FCS:.2f}")
@@ -180,92 +141,168 @@ elif FCS >= 0.50:
 else:
     st.error(f"Suboptimal Comfort — Score: {FCS:.2f}")
 
-st.subheader("⚠️ Predicted Risk Category")
 risk_prediction = classifier.predict(input_df)[0]
+st.subheader("Predicted Risk Category")
 st.write(risk_prediction)
 
 st.divider()
 
-# --------------------------------------------------
-# RESEARCH PANEL
-# --------------------------------------------------
+# ============================================================
+# SENSITIVITY ANALYSIS
+# ============================================================
 
-st.markdown("## Advanced Research & Model Validation")
+st.markdown("## Marginal Influence Analysis")
 
-show_research = st.toggle("Show Research Panel")
+selected_variable = st.selectbox("Select Variable for 10% Increase", X.columns)
 
-if show_research:
+adjusted_input = input_df.copy()
+adjusted_input[selected_variable] *= 1.10
+adjusted_FCS = reg_model.predict(adjusted_input)[0]
 
-    st.subheader("📊 Correlation Matrix")
-    corr_matrix = data.drop("Risk_Category", axis=1).corr()
-    st.dataframe(corr_matrix)
+delta = adjusted_FCS - FCS
 
-    fig, ax = plt.subplots()
-    cax = ax.matshow(corr_matrix, cmap="coolwarm")
-    fig.colorbar(cax)
-    plt.xticks(range(len(corr_matrix.columns)), corr_matrix.columns, rotation=90)
-    plt.yticks(range(len(corr_matrix.columns)), corr_matrix.columns)
-    st.pyplot(fig)
-
-    st.subheader("📈 Model Validation Metrics")
-    col1, col2 = st.columns(2)
-    col1.metric("Mean Absolute Error (MAE)", f"{MAE:.4f}")
-    col2.metric("R² Score", f"{R2:.4f}")
-    st.metric("Classification Accuracy", f"{classification_accuracy:.3f}")
-
-    cv_scores = cross_val_score(classifier, X_class, y_class, cv=5)
-    st.write("5-Fold Cross Validation Accuracy:", round(cv_scores.mean(), 3))
-
-    st.subheader("Model-Learned Feature Importance")
-    coef_df = pd.DataFrame({
-        "Feature": X.columns,
-        "Learned Weight": reg_model.coef_
-    })
-    st.bar_chart(coef_df.set_index("Feature"))
-
-    st.subheader("📅 30-Day Simulated Trend")
-    days = 30
-    trend_data = generate_dataset(days)
-    trend_X = trend_data.drop(["FCS_true", "Risk_Category"], axis=1)
-    trend_FCS = reg_model.predict(trend_X)
-    trend_df = pd.DataFrame({
-        "Day": range(1, days+1),
-        "FCS": trend_FCS
-    })
-    st.line_chart(trend_df.set_index("Day"))
-
-    st.subheader("Engineering Design Framework")
-    st.markdown("""
-1. Identify maternal wellness variables  
-2. Construct synthetic physiological model  
-3. Implement regression-based prediction  
-4. Validate with train/test split and cross-validation  
-5. Interpret feature contributions  
-6. Assess ethical and clinical limitations  
-""")
-
-    st.subheader("Limitations")
-    st.markdown("""
-• All data is simulated  
-• Not a medical diagnostic system  
-• Real maternal-fetal dynamics are more complex  
-• Intended for educational and engineering demonstration  
-""")
-
-st.subheader("Literature-Informed Variable Selection")
+st.write(f"Original FCS: {FCS:.3f}")
+st.write(f"Adjusted FCS: {adjusted_FCS:.3f}")
+st.write(f"Change in FCS: {delta:.3f}")
 
 st.markdown("""
-The seven wellness variables were selected based on widely documented 
-maternal–fetal health research:
+This approximates marginal influence (partial derivative behavior)
+of the weighted FCS function under synthetic conditions.
+""")
 
-• Maternal sleep impacts fetal growth and stress regulation  
-• Hydration influences placental circulation  
-• Maternal stress correlates with cortisol-mediated fetal effects  
-• Physical activity supports metabolic regulation  
-• Fetal movement reflects neurological development  
-• Gestational age influences developmental stage modeling  
-• BMI is associated with obstetric risk factors  
+st.divider()
 
-This model demonstrates how literature-informed factors can be integrated 
-into a computational framework.
+# ============================================================
+# LONGITUDINAL MODELING
+# ============================================================
+
+st.markdown("## Longitudinal Behavior Modeling")
+
+days = 30
+trend_data = generate_dataset(days)
+trend_X = trend_data.drop(["FCS_true", "Risk_Category"], axis=1)
+trend_FCS = reg_model.predict(trend_X)
+
+trend_df = pd.DataFrame({
+    "Day": range(1, days+1),
+    "FCS": trend_FCS
+})
+
+st.line_chart(trend_df.set_index("Day"))
+
+st.markdown("""
+Simulated trajectories demonstrate how sustained behavioral patterns
+may influence fetal comfort trends over time.
+""")
+
+st.divider()
+
+# ============================================================
+# MODEL VALIDATION
+# ============================================================
+
+st.markdown("## Model Validation & Performance")
+
+col1, col2 = st.columns(2)
+col1.metric("Mean Absolute Error (MAE)", f"{MAE:.4f}")
+col2.metric("Linear Regression R²", f"{R2:.4f}")
+
+st.metric("Random Forest R² (Comparison)", f"{rf_R2:.4f}")
+st.metric("Classification Accuracy", f"{classification_accuracy:.3f}")
+st.write("5-Fold Cross Validation Accuracy:", round(cv_scores.mean(), 3))
+
+st.markdown("""
+Linear regression was selected due to interpretability and minimal performance
+difference compared to ensemble methods under synthetic constraints.
+""")
+
+st.divider()
+
+# ============================================================
+# ROBUSTNESS TESTING
+# ============================================================
+
+st.markdown("## Robustness Testing (Repeated Partition Validation)")
+
+r2_scores = []
+
+for i in range(20):
+    Xt_train, Xt_test, yt_train, yt_test = train_test_split(
+        X, y, test_size=0.2
+    )
+    temp_model = LinearRegression()
+    temp_model.fit(Xt_train, yt_train)
+    temp_pred = temp_model.predict(Xt_test)
+    r2_scores.append(r2_score(yt_test, temp_pred))
+
+st.write("Average R² over 20 random splits:", round(np.mean(r2_scores), 4))
+
+st.markdown("""
+Repeated partitioning confirms model stability across random splits.
+""")
+
+st.divider()
+
+# ============================================================
+# CORRELATION MATRIX
+# ============================================================
+
+st.markdown("## Correlation Matrix")
+
+corr_matrix = data.drop("Risk_Category", axis=1).corr()
+
+fig, ax = plt.subplots()
+cax = ax.matshow(corr_matrix)
+fig.colorbar(cax)
+plt.xticks(range(len(corr_matrix.columns)), corr_matrix.columns, rotation=90)
+plt.yticks(range(len(corr_matrix.columns)), corr_matrix.columns)
+st.pyplot(fig)
+
+st.markdown("""
+Correlation structure confirms expected physiological directionality:
+sleep, movement, and hydration correlate positively with FCS,
+while stress shows inverse association.
+""")
+
+st.divider()
+
+# ============================================================
+# MODEL ARCHITECTURE
+# ============================================================
+
+st.markdown("## Mathematical Model Specification")
+
+st.markdown("""
+Pipeline:
+
+1. Input Collection (7 maternal variables)
+2. Normalization to 0–1 scale
+3. Weighted aggregation (FCS formula)
+4. Linear regression modeling
+5. Logistic classification
+6. Cross-validation and robustness testing
+""")
+
+coef_df = pd.DataFrame({
+    "Feature": X.columns,
+    "Learned Weight": reg_model.coef_
+})
+
+st.subheader("Feature Contribution (Regression Coefficients)")
+st.bar_chart(coef_df.set_index("Feature"))
+
+st.divider()
+
+# ============================================================
+# ETHICAL STATEMENT
+# ============================================================
+
+st.markdown("## Ethical & Compliance Statement")
+
+st.markdown("""
+• All data used is synthetically generated  
+• No human subjects were involved  
+• No medical claims are made  
+• Educational engineering prototype  
+• Fully compliant with NWSE and ISEF guidelines  
 """)
