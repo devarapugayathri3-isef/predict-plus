@@ -1,12 +1,39 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import mean_absolute_error, r2_score
 
-st.set_page_config(page_title="PREDICT+", layout="centered")
+# --------------------------------------------------
+# PAGE CONFIG
+# --------------------------------------------------
+
+st.set_page_config(page_title="PREDICT+", layout="wide")
+
+# Custom Styling
+st.markdown("""
+<style>
+.big-title {
+    font-size:48px !important;
+    font-weight:700;
+    color:#1f4e79;
+}
+.section-title {
+    font-size:28px !important;
+    font-weight:600;
+    color:#2e7d32;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# --------------------------------------------------
+# EXECUTIVE SUMMARY
+# --------------------------------------------------
+
+st.markdown('<p class="big-title">PREDICT+</p>', unsafe_allow_html=True)
 
 st.markdown("""
 ## Executive Summary
@@ -22,9 +49,32 @@ and BMI collectively influence fetal comfort in a simulated environment.
 The system emphasizes accessibility, interpretability, and ethical design.
 """)
 
+st.divider()
+
+st.markdown("""
+## Why This Matters
+
+Maternal wellness significantly influences fetal development outcomes.  
+Most monitoring systems are reactive rather than predictive.
+
+This prototype demonstrates how wearable-compatible wellness metrics 
+could be integrated into a computational framework to:
+
+• Improve early risk awareness  
+• Enhance patient education  
+• Support preventative maternal care  
+• Increase accessibility to data-driven insights  
+
+This work represents a conceptual step toward ethical, interpretable 
+maternal–fetal health modeling.
+""")
+
+st.divider()
+
 # --------------------------------------------------
-# Generate Synthetic Dataset (Only Once)
+# DATA GENERATION
 # --------------------------------------------------
+
 @st.cache_data
 def generate_dataset(n=1000):
     np.random.seed(42)
@@ -60,8 +110,9 @@ def generate_dataset(n=1000):
 data = generate_dataset()
 
 # --------------------------------------------------
-# Regression Model
+# MODEL TRAINING
 # --------------------------------------------------
+
 X = data.drop(["FCS_true", "Risk_Category"], axis=1)
 y = data["FCS_true"]
 
@@ -76,9 +127,7 @@ y_pred = reg_model.predict(X_test)
 MAE = mean_absolute_error(y_test, y_pred)
 R2 = r2_score(y_test, y_pred)
 
-# --------------------------------------------------
-# Classification Model
-# --------------------------------------------------
+# Classification
 X_class = X
 y_class = data["Risk_Category"]
 
@@ -91,39 +140,10 @@ classifier.fit(Xc_train, yc_train)
 classification_accuracy = classifier.score(Xc_test, yc_test)
 
 # --------------------------------------------------
-# USER INTERFACE
+# INTERACTIVE PANEL
 # --------------------------------------------------
 
-st.title("PREDICT+")
-st.subheader("Maternal–Fetal Wellness Computational Prototype")
-
-st.markdown("""
-### About This Tool
-
-PREDICT+ is an educational computational dashboard that models a **Fetal Comfort Score (FCS)** 
-based on seven measurable maternal wellness factors:
-
-• Sleep duration  
-• Hydration levels  
-• Stress perception  
-• Physical activity  
-• Fetal movement  
-• Gestational age  
-• Maternal BMI  
-
-The system uses simulated biomedical data to demonstrate how daily lifestyle patterns 
-may influence overall fetal comfort in a conceptual modeling framework.
-
-This tool is **not a medical device** and does not provide medical advice. 
-It is designed for educational and engineering demonstration purposes only.
-""")
-
-st.markdown("""
-### How to Use
-
-Adjust the sliders below to simulate different maternal wellness scenarios.
-The Fetal Comfort Score will update automatically in real time.
-""")
+st.markdown("## Interactive Simulation Panel")
 
 sleep = st.slider("Sleep (hours)", 0.0, 12.0, 7.0)
 hydration = st.slider("Hydration (liters/day)", 0.0, 5.0, 2.5)
@@ -145,61 +165,40 @@ input_df = pd.DataFrame([{
 
 FCS = reg_model.predict(input_df)[0]
 
-st.subheader("Fetal Comfort Score")
+st.divider()
+
+# --------------------------------------------------
+# OUTPUT
+# --------------------------------------------------
+
+st.subheader("🩺 Fetal Comfort Score")
 
 if FCS >= 0.75:
-    st.success(f"🟢 Optimal Comfort — Score: {FCS:.2f}")
+    st.success(f"Optimal Comfort — Score: {FCS:.2f}")
 elif FCS >= 0.50:
-    st.warning(f"🟡 Moderate Comfort — Score: {FCS:.2f}")
+    st.warning(f"Moderate Comfort — Score: {FCS:.2f}")
 else:
-    st.error(f"🔴 Suboptimal Comfort — Score: {FCS:.2f}")
+    st.error(f"Suboptimal Comfort — Score: {FCS:.2f}")
 
+st.subheader("⚠️ Predicted Risk Category")
 risk_prediction = classifier.predict(input_df)[0]
-
-st.subheader("Predicted Risk Category")
 st.write(risk_prediction)
 
-st.markdown("""
-**Risk Category Interpretation**
-
-The risk classification model groups simulated observations into:
-
-• High Risk  
-• Moderate Risk  
-• Low Risk  
-
-This classification is generated using logistic regression trained on synthetic data.
-It demonstrates how multiple maternal variables can collectively influence categorical risk levels.
-""")
-
-st.markdown("""
-**What does this score mean?**
-
-The Fetal Comfort Score (FCS) ranges from 0 to 1.
-
-• **0.75 – 1.00** → Optimal simulated comfort  
-• **0.50 – 0.74** → Moderate comfort  
-• **Below 0.50** → Suboptimal simulated conditions  
-
-The score is calculated using a weighted combination of normalized wellness inputs.
-Higher sleep, hydration, and fetal movement — and lower stress — generally increase the score.
-""")
+st.divider()
 
 # --------------------------------------------------
-# RESEARCH PANEL (Hidden)
+# RESEARCH PANEL
 # --------------------------------------------------
 
-show_research = st.toggle("Show Research & Model Validation Panel")
+st.markdown("## Advanced Research & Model Validation")
+
+show_research = st.toggle("Show Research Panel")
 
 if show_research:
 
-    # ---------------- Correlation ----------------
-    st.subheader("Correlation Matrix")
-
+    st.subheader("📊 Correlation Matrix")
     corr_matrix = data.drop("Risk_Category", axis=1).corr()
     st.dataframe(corr_matrix)
-
-    import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots()
     cax = ax.matshow(corr_matrix, cmap="coolwarm")
@@ -208,64 +207,47 @@ if show_research:
     plt.yticks(range(len(corr_matrix.columns)), corr_matrix.columns)
     st.pyplot(fig)
 
-    # ---------------- Validation ----------------
-    st.subheader("Model Validation Metrics")
-
+    st.subheader("📈 Model Validation Metrics")
     col1, col2 = st.columns(2)
     col1.metric("Mean Absolute Error (MAE)", f"{MAE:.4f}")
     col2.metric("R² Score", f"{R2:.4f}")
-
     st.metric("Classification Accuracy", f"{classification_accuracy:.3f}")
 
     cv_scores = cross_val_score(classifier, X_class, y_class, cv=5)
     st.write("5-Fold Cross Validation Accuracy:", round(cv_scores.mean(), 3))
 
-    # ---------------- Feature Importance ----------------
+    st.subheader("Model-Learned Feature Importance")
     coef_df = pd.DataFrame({
         "Feature": X.columns,
         "Learned Weight": reg_model.coef_
     })
-
-    st.subheader("Model-Learned Feature Importance")
     st.bar_chart(coef_df.set_index("Feature"))
 
-    # ---------------- Interpretation ----------------
-    st.markdown("""
-### Model Interpretation
-
-The regression model shows how strongly each wellness factor contributes 
-to predicted fetal comfort.
-
-The high R² value reflects that the model was trained on synthetic data 
-generated from a known physiological relationship. This demonstrates model stability 
-rather than clinical prediction accuracy.
-
-Cross-validation confirms that the classification model performs consistently 
-across multiple data splits.
-
-### Limitations
-
-• All data used in this system is simulated  
-• The model does not account for medical complications  
-• This tool is educational and not diagnostic  
-• Real-world maternal-fetal dynamics are more complex  
-
-Future work could include integration with wearable health tracking devices 
-or real longitudinal datasets under clinical supervision.
-""")
-
-    # ---------------- Time Series ----------------
-    st.subheader("30-Day Simulated Trend")
-
+    st.subheader("📅 30-Day Simulated Trend")
     days = 30
     trend_data = generate_dataset(days)
-
     trend_X = trend_data.drop(["FCS_true", "Risk_Category"], axis=1)
     trend_FCS = reg_model.predict(trend_X)
-
     trend_df = pd.DataFrame({
         "Day": range(1, days+1),
         "FCS": trend_FCS
     })
-
     st.line_chart(trend_df.set_index("Day"))
+
+    st.subheader("Engineering Design Framework")
+    st.markdown("""
+1. Identify maternal wellness variables  
+2. Construct synthetic physiological model  
+3. Implement regression-based prediction  
+4. Validate with train/test split and cross-validation  
+5. Interpret feature contributions  
+6. Assess ethical and clinical limitations  
+""")
+
+    st.subheader("Limitations")
+    st.markdown("""
+• All data is simulated  
+• Not a medical diagnostic system  
+• Real maternal-fetal dynamics are more complex  
+• Intended for educational and engineering demonstration  
+""")
