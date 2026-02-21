@@ -309,3 +309,17 @@ risk_prediction = classifier.predict(input_df)[0]
 
 st.subheader("Predicted Risk Category")
 st.write(risk_prediction)
+
+# ------------------------------
+# Research Panel (Hidden Toggle)
+# ------------------------------
+
+show_research = st.toggle("Show Research & Model Validation Panel")
+
+if show_research:
+    from sklearn.model_selection import cross_val_score
+    
+    cv_scores = cross_val_score(classifier, X_class, y_class, cv=5)
+    
+    st.subheader("Cross Validation")
+    st.write("5-Fold Cross Validation Accuracy:", round(cv_scores.mean(), 3))
