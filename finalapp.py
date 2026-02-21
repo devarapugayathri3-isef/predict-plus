@@ -8,6 +8,20 @@ from sklearn.metrics import mean_absolute_error, r2_score
 
 st.set_page_config(page_title="PREDICT+", layout="centered")
 
+st.markdown("""
+## Executive Summary
+
+PREDICT+ is a biomedical engineering prototype that demonstrates how 
+maternal wellness behaviors can be computationally modeled to produce 
+an interpretable Fetal Comfort Score (FCS).
+
+Using synthetic data and regression modeling, this dashboard illustrates 
+how sleep, hydration, stress, activity, fetal movement, gestational age, 
+and BMI collectively influence fetal comfort in a simulated environment.
+
+The system emphasizes accessibility, interpretability, and ethical design.
+""")
+
 # --------------------------------------------------
 # Generate Synthetic Dataset (Only Once)
 # --------------------------------------------------
@@ -179,6 +193,21 @@ show_research = st.toggle("Show Research & Model Validation Panel")
 
 if show_research:
 
+    st.subheader("Correlation Matrix")
+
+corr_matrix = data.drop("Risk_Category", axis=1).corr()
+
+st.dataframe(corr_matrix)
+
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots()
+cax = ax.matshow(corr_matrix, cmap="coolwarm")
+fig.colorbar(cax)
+plt.xticks(range(len(corr_matrix.columns)), corr_matrix.columns, rotation=90)
+plt.yticks(range(len(corr_matrix.columns)), corr_matrix.columns)
+st.pyplot(fig)
+
     st.subheader("Model Validation Metrics")
     col1, col2 = st.columns(2)
     col1.metric("Mean Absolute Error (MAE)", f"{MAE:.4f}")
@@ -222,3 +251,18 @@ across multiple data splits.
 Future work could include integration with wearable health tracking devices 
 or real longitudinal datasets under clinical supervision.
 """)
+
+st.subheader("30-Day Simulated Trend")
+
+days = 30
+trend_data = generate_dataset(days)
+
+trend_X = trend_data.drop(["FCS_true", "Risk_Category"], axis=1)
+trend_FCS = reg_model.predict(trend_X)
+
+trend_df = pd.DataFrame({
+    "Day": range(1, days+1),
+    "FCS": trend_FCS
+})
+
+st.line_chart(trend_df.set_index("Day"))
