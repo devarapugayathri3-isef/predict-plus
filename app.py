@@ -81,4 +81,9 @@ st.title("PREDICT+")
 st.subheader("Maternal–Fetal Wellness Computational Prototype")
 
 sleep = st.slider("Sleep (hours)", 0.0, 12.0, 7.0)
-hydration
+hydration = st.slider("Hydration (liters/day)", 0.0, 5.0, 2.5)
+stress = st.slider("Stress Level (0-10)", 0, 10, 5)
+activity = st.slider("Physical Activity (minutes)", 0, 120, 30)
+movement = st.slider("Fetal Movement (kicks/day)", 0, 50, 20)
+gestation = st.slider("Gestational Age (weeks)", 1, 40, 20)
+bmi = st.slider("BMI", 15.0, 40.0, 25.0)
