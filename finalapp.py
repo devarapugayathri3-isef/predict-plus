@@ -189,10 +189,16 @@ if show_research:
     cv_scores = cross_val_score(classifier, X_class, y_class, cv=5)
     st.write("5-Fold Cross Validation Accuracy:", round(cv_scores.mean(), 3))
 
+    # ---- Feature Importance ----
     coef_df = pd.DataFrame({
         "Feature": X.columns,
         "Learned Weight": reg_model.coef_
+    })
 
+    st.subheader("Model-Learned Feature Importance")
+    st.bar_chart(coef_df.set_index("Feature"))
+
+    # ---- Interpretation ----
     st.markdown("""
 ### Model Interpretation
 
