@@ -193,22 +193,24 @@ show_research = st.toggle("Show Research & Model Validation Panel")
 
 if show_research:
 
+    # ---------------- Correlation ----------------
     st.subheader("Correlation Matrix")
 
-corr_matrix = data.drop("Risk_Category", axis=1).corr()
+    corr_matrix = data.drop("Risk_Category", axis=1).corr()
+    st.dataframe(corr_matrix)
 
-st.dataframe(corr_matrix)
+    import matplotlib.pyplot as plt
 
-import matplotlib.pyplot as plt
+    fig, ax = plt.subplots()
+    cax = ax.matshow(corr_matrix, cmap="coolwarm")
+    fig.colorbar(cax)
+    plt.xticks(range(len(corr_matrix.columns)), corr_matrix.columns, rotation=90)
+    plt.yticks(range(len(corr_matrix.columns)), corr_matrix.columns)
+    st.pyplot(fig)
 
-fig, ax = plt.subplots()
-cax = ax.matshow(corr_matrix, cmap="coolwarm")
-fig.colorbar(cax)
-plt.xticks(range(len(corr_matrix.columns)), corr_matrix.columns, rotation=90)
-plt.yticks(range(len(corr_matrix.columns)), corr_matrix.columns)
-st.pyplot(fig)
-
+    # ---------------- Validation ----------------
     st.subheader("Model Validation Metrics")
+
     col1, col2 = st.columns(2)
     col1.metric("Mean Absolute Error (MAE)", f"{MAE:.4f}")
     col2.metric("R² Score", f"{R2:.4f}")
@@ -218,7 +220,7 @@ st.pyplot(fig)
     cv_scores = cross_val_score(classifier, X_class, y_class, cv=5)
     st.write("5-Fold Cross Validation Accuracy:", round(cv_scores.mean(), 3))
 
-    # ---- Feature Importance ----
+    # ---------------- Feature Importance ----------------
     coef_df = pd.DataFrame({
         "Feature": X.columns,
         "Learned Weight": reg_model.coef_
@@ -227,7 +229,7 @@ st.pyplot(fig)
     st.subheader("Model-Learned Feature Importance")
     st.bar_chart(coef_df.set_index("Feature"))
 
-    # ---- Interpretation ----
+    # ---------------- Interpretation ----------------
     st.markdown("""
 ### Model Interpretation
 
@@ -252,17 +254,18 @@ Future work could include integration with wearable health tracking devices
 or real longitudinal datasets under clinical supervision.
 """)
 
-st.subheader("30-Day Simulated Trend")
+    # ---------------- Time Series ----------------
+    st.subheader("30-Day Simulated Trend")
 
-days = 30
-trend_data = generate_dataset(days)
+    days = 30
+    trend_data = generate_dataset(days)
 
-trend_X = trend_data.drop(["FCS_true", "Risk_Category"], axis=1)
-trend_FCS = reg_model.predict(trend_X)
+    trend_X = trend_data.drop(["FCS_true", "Risk_Category"], axis=1)
+    trend_FCS = reg_model.predict(trend_X)
 
-trend_df = pd.DataFrame({
-    "Day": range(1, days+1),
-    "FCS": trend_FCS
-})
+    trend_df = pd.DataFrame({
+        "Day": range(1, days+1),
+        "FCS": trend_FCS
+    })
 
-st.line_chart(trend_df.set_index("Day"))
+    st.line_chart(trend_df.set_index("Day"))
