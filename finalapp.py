@@ -251,3 +251,21 @@ if show_research:
 • Real maternal-fetal dynamics are more complex  
 • Intended for educational and engineering demonstration  
 """)
+
+st.subheader("Literature-Informed Variable Selection")
+
+st.markdown("""
+The seven wellness variables were selected based on widely documented 
+maternal–fetal health research:
+
+• Maternal sleep impacts fetal growth and stress regulation  
+• Hydration influences placental circulation  
+• Maternal stress correlates with cortisol-mediated fetal effects  
+• Physical activity supports metabolic regulation  
+• Fetal movement reflects neurological development  
+• Gestational age influences developmental stage modeling  
+• BMI is associated with obstetric risk factors  
+
+This model demonstrates how literature-informed factors can be integrated 
+into a computational framework.
+""")
