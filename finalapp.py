@@ -222,6 +222,3 @@ across multiple data splits.
 Future work could include integration with wearable health tracking devices 
 or real longitudinal datasets under clinical supervision.
 """)
-
-    st.subheader("Model-Learned Feature Importance")
-    st.bar_chart(coef_df.set_index("Feature"))
