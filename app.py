@@ -140,16 +140,12 @@ st.bar_chart(df.set_index("Factor"))
 
 
 
-
-
 if st.button("Run Sensitivity Analysis"):
     sensitivity = {
         k: round(v / FCS * 100, 2) for k, v in contributions.items()
     }
     st.write("Relative Impact (%)")
     st.write(sensitivity)
-
-
 
 
 import numpy as np
@@ -160,8 +156,6 @@ st.subheader("Next-Day Predicted Comfort")
 st.write(f"Predicted Score: {predicted_FCS:.2f}")
 
 
-
-
 with st.expander("Model Design Explanation"):
     st.write("""
     The Fetal Comfort Score is a weighted, normalized composite index
@@ -169,3 +163,65 @@ with st.expander("Model Design Explanation"):
     Each variable was scaled to 0–1 and assigned weights based on
     relative physiological impact reported in published studies.
     """)
+
+
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+@st.cache_data
+def generate_dataset(n=1000):
+    data = pd.DataFrame({
+        "sleep": np.random.uniform(4, 10, n),
+        "hydration": np.random.uniform(1, 4, n),
+        "stress": np.random.uniform(0, 10, n),
+        "activity": np.random.uniform(0, 90, n),
+        "movement": np.random.uniform(5, 40, n),
+        "gestation": np.random.uniform(5, 40, n),
+        "bmi": np.random.uniform(18, 35, n)
+    })
+
+    # Hidden physiological relationship (ground truth)
+    data["FCS_true"] = (
+        0.22*(data["sleep"]/10) +
+        0.15*(data["hydration"]/4) +
+        0.20*(1-data["stress"]/10) +
+        0.13*(data["activity"]/90) +
+        0.15*(data["movement"]/40) +
+        0.05*(data["gestation"]/40) +
+        0.10*(1-abs(data["bmi"]-22)/15)
+    )
+
+    return data
+
+
+
+data = generate_dataset()
+
+X = data.drop("FCS_true", axis=1)
+y = data["FCS_true"]
+
+model = LinearRegression()
+model.fit(X, y)
+
+
+input_df = pd.DataFrame([{
+    "sleep": sleep,
+    "hydration": hydration,
+    "stress": stress,
+    "activity": activity,
+    "movement": movement,
+    "gestation": gestation,
+    "bmi": bmi
+}])
+
+FCS = model.predict(input_df)[0]
+
+
+coef_df = pd.DataFrame({
+    "Feature": X.columns,
+    "Learned Weight": model.coef_
+})
+
+st.subheader("Model-Learned Feature Importance")
+st.bar_chart(coef_df.set_index("Feature"))
