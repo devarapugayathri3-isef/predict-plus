@@ -83,6 +83,34 @@ classification_accuracy = classifier.score(Xc_test, yc_test)
 st.title("PREDICT+")
 st.subheader("Maternal–Fetal Wellness Computational Prototype")
 
+st.markdown("""
+### About This Tool
+
+PREDICT+ is an educational computational dashboard that models a **Fetal Comfort Score (FCS)** 
+based on seven measurable maternal wellness factors:
+
+• Sleep duration  
+• Hydration levels  
+• Stress perception  
+• Physical activity  
+• Fetal movement  
+• Gestational age  
+• Maternal BMI  
+
+The system uses simulated biomedical data to demonstrate how daily lifestyle patterns 
+may influence overall fetal comfort in a conceptual modeling framework.
+
+This tool is **not a medical device** and does not provide medical advice. 
+It is designed for educational and engineering demonstration purposes only.
+""")
+
+st.markdown("""
+### How to Use
+
+Adjust the sliders below to simulate different maternal wellness scenarios.
+The Fetal Comfort Score will update automatically in real time.
+""")
+
 sleep = st.slider("Sleep (hours)", 0.0, 12.0, 7.0)
 hydration = st.slider("Hydration (liters/day)", 0.0, 5.0, 2.5)
 stress = st.slider("Stress Level (0-10)", 0, 10, 5)
@@ -117,6 +145,32 @@ risk_prediction = classifier.predict(input_df)[0]
 st.subheader("Predicted Risk Category")
 st.write(risk_prediction)
 
+st.markdown("""
+**Risk Category Interpretation**
+
+The risk classification model groups simulated observations into:
+
+• High Risk  
+• Moderate Risk  
+• Low Risk  
+
+This classification is generated using logistic regression trained on synthetic data.
+It demonstrates how multiple maternal variables can collectively influence categorical risk levels.
+""")
+
+st.markdown("""
+**What does this score mean?**
+
+The Fetal Comfort Score (FCS) ranges from 0 to 1.
+
+• **0.75 – 1.00** → Optimal simulated comfort  
+• **0.50 – 0.74** → Moderate comfort  
+• **Below 0.50** → Suboptimal simulated conditions  
+
+The score is calculated using a weighted combination of normalized wellness inputs.
+Higher sleep, hydration, and fetal movement — and lower stress — generally increase the score.
+""")
+
 # --------------------------------------------------
 # RESEARCH PANEL (Hidden)
 # --------------------------------------------------
@@ -138,6 +192,30 @@ if show_research:
     coef_df = pd.DataFrame({
         "Feature": X.columns,
         "Learned Weight": reg_model.coef_
+
+    st.markdown("""
+### Model Interpretation
+
+The regression model shows how strongly each wellness factor contributes 
+to predicted fetal comfort.
+
+The high R² value reflects that the model was trained on synthetic data 
+generated from a known physiological relationship. This demonstrates model stability 
+rather than clinical prediction accuracy.
+
+Cross-validation confirms that the classification model performs consistently 
+across multiple data splits.
+
+### Limitations
+
+• All data used in this system is simulated  
+• The model does not account for medical complications  
+• This tool is educational and not diagnostic  
+• Real-world maternal-fetal dynamics are more complex  
+
+Future work could include integration with wearable health tracking devices 
+or real longitudinal datasets under clinical supervision.
+""")
     })
 
     st.subheader("Model-Learned Feature Importance")
