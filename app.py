@@ -87,3 +87,35 @@ activity = st.slider("Physical Activity (minutes)", 0, 120, 30)
 movement = st.slider("Fetal Movement (kicks/day)", 0, 50, 20)
 gestation = st.slider("Gestational Age (weeks)", 1, 40, 20)
 bmi = st.slider("BMI", 15.0, 40.0, 25.0)
+
+# Normalize inputs (0–1 scaling)
+
+sleep_n = sleep / 12
+hydration_n = hydration / 5
+stress_n = 1 - (stress / 10)      # higher stress = lower comfort
+activity_n = activity / 120
+movement_n = movement / 50
+gestation_n = gestation / 40
+bmi_n = 1 - abs(bmi - 22) / 20    # ideal BMI around 22
+
+# Weighted FCS formula
+FCS = (
+    0.20 * sleep_n +
+    0.15 * hydration_n +
+    0.20 * stress_n +
+    0.15 * activity_n +
+    0.15 * movement_n +
+    0.05 * gestation_n +
+    0.10 * bmi_n
+)
+
+
+
+st.subheader("Fetal Comfort Score")
+
+if FCS >= 0.75:
+    st.success(f"🟢 Optimal Comfort — Score: {FCS:.2f}")
+elif FCS >= 0.50:
+    st.warning(f"🟡 Moderate Comfort — Score: {FCS:.2f}")
+else:
+    st.error(f"🔴 Suboptimal Comfort — Score: {FCS:.2f}")
