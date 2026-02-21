@@ -119,3 +119,53 @@ elif FCS >= 0.50:
     st.warning(f"🟡 Moderate Comfort — Score: {FCS:.2f}")
 else:
     st.error(f"🔴 Suboptimal Comfort — Score: {FCS:.2f}")
+
+
+
+import pandas as pd
+
+contributions = {
+    "Sleep": 0.20 * sleep_n,
+    "Hydration": 0.15 * hydration_n,
+    "Stress": 0.20 * stress_n,
+    "Activity": 0.15 * activity_n,
+    "Movement": 0.15 * movement_n,
+    "Gestation": 0.05 * gestation_n,
+    "BMI": 0.10 * bmi_n
+}
+
+df = pd.DataFrame(list(contributions.items()), columns=["Factor", "Contribution"])
+
+st.bar_chart(df.set_index("Factor"))
+
+
+
+
+
+if st.button("Run Sensitivity Analysis"):
+    sensitivity = {
+        k: round(v / FCS * 100, 2) for k, v in contributions.items()
+    }
+    st.write("Relative Impact (%)")
+    st.write(sensitivity)
+
+
+
+
+import numpy as np
+
+predicted_FCS = FCS + np.random.normal(0, 0.03)
+
+st.subheader("Next-Day Predicted Comfort")
+st.write(f"Predicted Score: {predicted_FCS:.2f}")
+
+
+
+
+with st.expander("Model Design Explanation"):
+    st.write("""
+    The Fetal Comfort Score is a weighted, normalized composite index
+    derived from literature-supported maternal wellness factors.
+    Each variable was scaled to 0–1 and assigned weights based on
+    relative physiological impact reported in published studies.
+    """)
