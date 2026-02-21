@@ -225,3 +225,81 @@ coef_df = pd.DataFrame({
 
 st.subheader("Model-Learned Feature Importance")
 st.bar_chart(coef_df.set_index("Feature"))
+
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error, r2_score
+from sklearn.linear_model import LinearRegression
+
+data = generate_dataset()
+
+X = data.drop("FCS_true", axis=1)
+y = data["FCS_true"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Validation metrics
+y_pred = model.predict(X_test)
+
+MAE = mean_absolute_error(y_test, y_pred)
+R2 = r2_score(y_test, y_pred)
+
+
+
+st.subheader("Model Validation Metrics")
+
+col1, col2 = st.columns(2)
+
+col1.metric("Mean Absolute Error (MAE)", f"{MAE:.4f}")
+col2.metric("R² Score", f"{R2:.4f}")
+
+
+
+with st.expander("Model Validation Explanation"):
+    st.write("""
+    The dataset was split into 80% training and 20% testing data.
+    The regression model was trained on the training set and evaluated
+    on unseen test data.
+
+    • MAE (Mean Absolute Error) measures average prediction error.
+    • R² measures how well the model explains variance in fetal comfort.
+
+    High R² and low MAE indicate strong predictive performance.
+    """)
+
+
+from sklearn.linear_model import LogisticRegression
+
+# Create risk categories
+data["Risk_Category"] = pd.cut(
+    data["FCS_true"],
+    bins=[0, 0.5, 0.75, 1],
+    labels=["High Risk", "Moderate Risk", "Low Risk"]
+)
+
+X_class = data.drop(["FCS_true", "Risk_Category"], axis=1)
+y_class = data["Risk_Category"]
+
+Xc_train, Xc_test, yc_train, yc_test = train_test_split(
+    X_class, y_class, test_size=0.2, random_state=42
+)
+
+classifier = LogisticRegression(max_iter=1000)
+classifier.fit(Xc_train, yc_train)
+
+classification_accuracy = classifier.score(Xc_test, yc_test)
+
+
+st.subheader("Risk Classification Model")
+
+st.metric("Classification Accuracy", f"{classification_accuracy:.3f}")
+
+risk_prediction = classifier.predict(input_df)[0]
+
+st.subheader("Predicted Risk Category")
+st.write(risk_prediction)
